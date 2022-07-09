@@ -12,9 +12,19 @@ const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 
 let map, mapEvent;
-//implementing geolocation using public api
-if (navigator.geolocation)
-  navigator.geolocation.getCurrentPosition(function (position) {
+
+class App {
+  constructor() {}
+  _getPosition() {
+    if (navigator.geolocation)
+      navigator.geolocation.getCurrentPosition(this._loadMap, function () {
+            alert(`Could not get your location`);
+          }
+        );
+      };
+  }
+
+  _loadMap(position) {
     console.log(position);
     const { latitude } = position.coords;
     const { longitude } = position.coords;
@@ -36,12 +46,14 @@ if (navigator.geolocation)
         mapEvent = mapE;
         form.classList.remove('hidden');
         inputDistance.focus();
-      }, // L.marker(coords
-      function () {
-        alert(`Could not get your location`);
-      }
-    );
-  });
+      
+      });
+  _showForm() {}
+  _toggleElevationField() {}
+  _newWorkout() {}
+}
+
+//implementing geolocation using public api
 
 form.addEventListener('submit', function (e) {
   e.preventDefault();
@@ -68,6 +80,11 @@ form.addEventListener('submit', function (e) {
         className: 'running-popup',
       })
     )
-    .setPopupContent('Workout')
+    .setPopupContent(`Type 1 : 2`)
     .openPopup();
+});
+
+inputType.addEventListener('change', function () {
+  inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
+  inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
 });
