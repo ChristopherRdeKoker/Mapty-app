@@ -199,27 +199,125 @@ class Cycling extends Workout {
     return this.speed;
   }
 }
+
 const run1 = new Running([122, -12], 12, 55, 170);
-console.log(run1);
+const cycle1 = new Cycling([122, -12], 22, 37, 1470);
+
+console.log(run1, cycle1);
+
 ///////////////////////
-// const form = document.querySelector('.form');
-// const containerWorkouts = document.querySelector('.workouts');
-// const inputType = document.querySelector('.form__input--type');
-// const inputDistance = document.querySelector('.form__input--distance');
-// const inputDuration = document.querySelector('.form__input--duration');
-// const inputCadence = document.querySelector('.form__input--cadence');
-// const inputElevation = document.querySelector('.form__input--elevation');
+const form = document.querySelector('.form');
+const containerWorkouts = document.querySelector('.workouts');
+const inputType = document.querySelector('.form__input--type');
+const inputDistance = document.querySelector('.form__input--distance');
+const inputDuration = document.querySelector('.form__input--duration');
+const inputCadence = document.querySelector('.form__input--cadence');
+const inputElevation = document.querySelector('.form__input--elevation');
 
-// class App {
-//   // #map;
-//   // #workouts = [];
-//   constructor() {
+class App {
+  #map;
+  #mapEvent;
+  #workouts = [];
 
-//   }
+  constructor() {
+    this._getPosition();
+    form.addEventListener('submit', this._newWorkout.bind(this));
+    inputType.addEventListener('change', this._toggleElevationField);
+  }
+  _getPosition() {
+    if (navigator.geolocation)
+      navigator.geolocation.getCurrentPosition(
+        this._loadMap.bind(this),
+        function () {
+          alert('could not get your location');
+        }
+      );
+  }
 
-//   _loadMap(position){
-//     const latitude =
-//     // const longitude =
+  _loadMap(position) {
+    const { latitude } = position.coords;
+    const { longitude } = position.coords;
+    console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
 
-//   }
-// }
+    const coords = [latitude, longitude];
+
+    this.#map = L.map('map').setView(coords, 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.#map);
+
+    //handling clicks on map
+    this.#map.on('click', this._showForm.bind(this));
+  }
+
+  _showForm(mapE) {
+    this.#mapEvent = mapE;
+    form.classList.remove('hidden');
+    inputDuration.focus();
+  }
+
+  _hideform() {
+    inputDistance.value =
+      inputDuration.value =
+      inputElevation.value =
+      inputCadence.value =
+        '';
+
+    form.style.display = 'none';
+    form.classList.add('hidden');
+    setTimeout(() => (form.style.display = 'grid'), 1000);
+  }
+
+  _toggleElevationField() {
+    inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
+    inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
+  }
+
+  _newWorkout(e) {
+    const validInputs = (...inputs) =>
+      inputs.every(inp => Number.isFinite(inp));
+    const allPositive = (...inputs) => inputs.every(inp => inp > 0);
+
+    e.preventDefault();
+
+    const type = inputType.value;
+    const distance = +inputDistance.value;
+    const duration = +inputDuration.value;
+    const { lat, lng } = this.#mapEvent.latlng;
+    let workout;
+
+    if (type === 'running') {
+      const cadence = +inputCadence.value;
+
+      if (
+        !validInputs(distance, duration, cadence) ||
+        !allPositive(distance, duration, cadence)
+      )
+        return alert('False non positive number');
+
+      workout = new Running([lat, lng], distance, duration, cadence);
+    }
+
+    if (type === 'cycling') {
+      const elevation = +inputElevation.value;
+
+      if (
+        !validInputs(distance, duration, elevation) ||
+        !allPositive(distance, duration)
+      )
+        return alert('False non positive number');
+
+      workout = new Cycling([lat, lng], distance, duration, elevation);
+    }
+
+    this.#workouts.push(workout);
+    console.log(workout);
+    this._hideform();
+  }
+
+  _renderWorkout(workout) {}
+}
+
+const app = new App();
